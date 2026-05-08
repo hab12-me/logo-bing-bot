@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Logo Bing Bingo</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+        }
+        .container { max-width: 100%; padding: 10px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 12px; }
+        .logo { font-size: 22px; font-weight: 800; background: linear-gradient(135deg, #00d4ff, #ff6b6b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .stats-row { display: flex; gap: 10px; margin-bottom: 12px; }
+        .stat-card { flex: 1; background: rgba(0,0,0,0.4); backdrop-filter: blur(10px); border-radius: 14px; padding: 10px; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
+        .stat-label { font-size: 10px; color: #aaa; }
+        .stat-value { font-size: 18px; font-weight: bold; color: #00d4ff; }
+        .section { background: rgba(0,0,0,0.3); backdrop-filter: blur(10px); border-radius: 16px; padding: 12px; margin-bottom: 12px; }
+        .section-title { font-size: 12px; font-weight: 600; margin-bottom: 10px; color: #aaa; }
+        
+        /* Cards Grid */
+        .cards-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; max-height: 250px; overflow-y: auto; padding-right: 4px; }
+        .card-btn { aspect-ratio: 1; background: linear-gradient(135deg, #4a4e69, #22223b); border: none; border-radius: 10px; color: white; font-size: 14px; font-weight: bold; cursor: pointer; transition: all 0.2s; }
+        .card-btn:active { transform: scale(0.95); }
+        .card-btn.owned { background: linear-gradient(135deg, #2ecc71, #27ae60); opacity: 0.9; cursor: default; box-shadow: 0 0 8px #2ecc71; }
+        .card-btn.disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        .preview-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; background: rgba(0,0,0,0.4); padding: 10px; border-radius: 14px; margin-bottom: 10px; }
+        .preview-cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.1); border-radius: 8px; font-size: 13px; font-weight: bold; }
+        .preview-free { background: #2ecc71; color: white; }
+        
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 14px; font-weight: bold; font-size: 14px; cursor: pointer; transition: all 0.2s; }
+        .btn:active { transform: scale(0.98); }
+        .btn-primary { background: #2ecc71; color: white; }
+        .btn-secondary { background: rgba(255,255,255,0.1); color: white; }
+        .btn-danger { background: #e74c3c; color: white; }
+        .action-buttons { display: flex; gap: 10px; margin-top: 10px; }
+        
+        .countdown { text-align: center; padding: 15px; background: linear-gradient(135deg, rgba(46,204,113,0.2), rgba(46,204,113,0.05)); border-radius: 20px; margin-top: 12px; }
+        .countdown-number { font-size: 42px; font-weight: bold; color: #2ecc71; }
+        
+        /* Side-by-Side Layout */
+        .game-layout { display: flex; gap: 12px; flex-wrap: wrap; }
+        .game-board { flex: 1.2; min-width: 200px; }
+        .game-sidebar { flex: 1; min-width: 200px; }
+        
+        .master-board { background: rgba(0,0,0,0.3); border-radius: 16px; padding: 10px; }
+        .master-header { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-bottom: 8px; }
+        .master-header span { text-align: center; padding: 6px; font-size: 12px; font-weight: bold; border-radius: 8px; }
+        .header-b { background: #2ecc71; }
+        .header-i { background: #f39c12; }
+        .header-n { background: #3498db; }
+        .header-g { background: #e74c3c; }
+        .header-o { background: #9b59b6; }
+        .master-grid { display: flex; flex-direction: column; gap: 4px; }
+        .master-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+        .master-cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.5); border-radius: 8px; font-size: 10px; font-weight: bold; transition: all 0.2s; }
+        .master-cell.called { background: #2ecc71; color: #000; animation: pulse 0.3s ease; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        
+        .game-sidebar-inner { background: rgba(0,0,0,0.3); border-radius: 16px; padding: 10px; }
+        .current-call { text-align: center; background: linear-gradient(135deg, #667eea, #764ba2); padding: 10px; border-radius: 16px; margin-bottom: 12px; }
+        .call-ball { width: 60px; height: 60px; background: #f39c12; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; margin-top: 6px; animation: ballPop 0.4s ease; }
+        @keyframes ballPop { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        
+        .history { display: flex; gap: 6px; justify-content: center; margin-bottom: 12px; flex-wrap: wrap; }
+        .history-ball { width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold; }
+        .ball-b { background: #2ecc71; }
+        .ball-i { background: #f39c12; }
+        .ball-n { background: #3498db; }
+        .ball-g { background: #e74c3c; }
+        .ball-o { background: #9b59b6; }
+        
+        .player-cards-scroll { max-height: 280px; overflow-y: auto; padding-right: 4px; }
+        .player-card { background: rgba(0,0,0,0.4); border-radius: 12px; padding: 8px; margin-bottom: 8px; }
+        .player-card-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; }
+        .player-cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.12); border-radius: 6px; font-size: 10px; font-weight: bold; }
+        .player-cell.marked { background: #2ecc71; color: #000; }
+        .player-cell.free { background: #f39c12; color: white; }
+        
+        .bingo-btn { width: 100%; padding: 14px; font-size: 18px; font-weight: bold; background: linear-gradient(135deg, #f39c12, #e67e22); border: none; border-radius: 50px; color: white; cursor: pointer; margin-top: 12px; }
+        .bingo-btn:active { transform: scale(0.98); }
+        .bingo-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        .popup { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.9); padding: 10px 20px; border-radius: 50px; font-size: 13px; z-index: 1000; display: none; white-space: nowrap; }
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: none; align-items: center; justify-content: center; z-index: 2000; }
+        .modal-content { background: linear-gradient(135deg, #1a1a2e, #16213e); border-radius: 28px; padding: 25px; text-align: center; margin: 20px; max-width: 280px; border: 1px solid rgba(255,255,255,0.1); }
+        .modal-content h2 { font-size: 36px; margin-bottom: 12px; color: #ffeb3b; }
+        .hidden { display: none !important; }
+        ::-webkit-scrollbar { width: 3px; }
+        ::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
+        
+        .insufficient { animation: shake 0.5s ease; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header"><div class="logo">🎯 LOGO BING</div></div>
+        <div class="stats-row">
+            <div class="stat-card"><div class="stat-label">💰 BALANCE</div><div class="stat-value" id="balance">0 ETB</div></div>
+            <div class="stat-card"><div class="stat-label">🎮 CARDS</div><div class="stat-value" id="cardCount">0</div></div>
+        </div>
+
+        <!-- Lobby View -->
+        <div id="lobbyView">
+            <div class="section">
+                <div class="section-title">🎴 TAP A CARD TO BUY (MAX 2, 10 ETB EACH)</div>
+                <div class="cards-grid" id="cardsGrid"></div>
+            </div>
+            
+            <div id="myCardsSection" class="section hidden">
+                <div class="section-title">🎮 MY CARDS (<span id="myCardsCount">0</span>/2)</div>
+                <div id="myCardsList"></div>
+                <div class="action-buttons">
+                    <button class="btn btn-secondary" id="resetBtn">🔄 RESET ALL CARDS</button>
+                </div>
+            </div>
+
+            <div id="countdownSection" class="countdown hidden">
+                <div>⏳ GAME STARTS IN</div>
+                <div class="countdown-number" id="countdownTimer">30</div>
+            </div>
+        </div>
+
+        <!-- Game View - Side by Side -->
+        <div id="gameView" class="hidden">
+            <div class="game-layout">
+                <div class="game-board">
+                    <div class="master-board">
+                        <div class="master-header">
+                            <span class="header-b">B</span><span class="header-i">I</span><span class="header-n">N</span><span class="header-g">G</span><span class="header-o">O</span>
+                        </div>
+                        <div class="master-grid" id="masterGrid"></div>
+                    </div>
+                </div>
+                <div class="game-sidebar">
+                    <div class="game-sidebar-inner">
+                        <div class="current-call">
+                            <div style="font-size: 11px;">CURRENT CALL</div>
+                            <div class="call-ball" id="currentCall">—</div>
+                        </div>
+                        <div class="history" id="historyCalls"></div>
+                        <div class="player-cards-scroll" id="playerCardsContainer"></div>
+                        <button class="bingo-btn" id="bingoBtn">🎯 BINGO! 🎯</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="popup" id="popup"></div>
+    <div class="modal" id="winnerModal">
+        <div class="modal-content">
+            <h2>🎉 BINGO!</h2>
+            <p id="winnerMessage"></p>
+            <button class="btn btn-primary" id="closeModalBtn">PLAY AGAIN</button>
+        </div>
+    </div>
+
+    <script>
+        const tg = window.Telegram?.WebApp;
+        if (tg) { tg.ready(); tg.expand(); }
+        
+        const BACKEND_URL = window.location.origin;
+        let telegramId = tg?.initDataUnsafe?.user?.id || 'test_' + Math.random();
+        let balance = 0;
+        let firstName = '';
+        let allCards = [];
+        let myCards = [];
+        let gameActive = false;
+        let calledNumbers = [];
+        let callInterval = null;
+        let countdownInterval = null;
+        let countdown = 30;
+        let isProcessingBuy = false;
+        
+        async function loadUserData() {
+            try {
+                const res = await fetch(`${BACKEND_URL}/api/user/${telegramId}`);
+                const data = await res.json();
+                if (data.success) {
+                    balance = data.balance;
+                    firstName = data.firstName;
+                    updateBalanceDisplay();
+                }
+            } catch(e) { console.error(e); }
+        }
+        
+        async function updateBalanceOnServer(newBalance, betAmount = 0) {
+            try {
+                await fetch(`${BACKEND_URL}/api/game`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ telegramId, action: 'updateBalance', data: { balance: newBalance, betAmount } })
+                });
+            } catch(e) {}
+        }
+        
+        async function recordWin(winAmount, newBalance) {
+            try {
+                await fetch(`${BACKEND_URL}/api/game`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ telegramId, action: 'recordWin', data: { winAmount: winAmount, newBalance: newBalance } })
+                });
+            } catch(e) {}
+        }
+        
+        function updateBalanceDisplay() {
+            document.getElementById('balance').textContent = `${balance.toFixed(2)} ETB`;
+            document.getElementById('cardCount').textContent = myCards.length;
+            document.getElementById('myCardsCount').textContent = myCards.length;
+        }
+        
+        function deductBalance(amount) {
+            if (balance >= amount) {
+                balance -= amount;
+                updateBalanceDisplay();
+                updateBalanceOnServer(balance, amount);
+                return true;
+            }
+            return false;
+        }
+        
+        function addBalance(amount) {
+            balance += amount;
+            updateBalanceDisplay();
+            updateBalanceOnServer(balance);
+        }
+        
+        function generateAllCards() {
+            for (let i = 1; i <= 500; i++) {
+                allCards.push({ id: i, grid: generateGrid() });
+            }
+        }
+        
+        function generateGrid() {
+            const grid = [[],[],[],[],[]];
+            for (let col = 0; col < 5; col++) {
+                const start = col * 15 + 1;
+                const end = start + 14;
+                let nums = [];
+                for (let n = start; n <= end; n++) nums.push(n);
+                for (let i = nums.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [nums[i], nums[j]] = [nums[j], nums[i]];
+                }
+                for (let row = 0; row < 5; row++) {
+                    if (row === 2 && col === 2) grid[row][col] = 0;
+                    else grid[row][col] = nums[row];
+                }
+            }
+            return grid;
+        }
+        
+        function buildCardsGrid() {
+            const container = document.getElementById('cardsGrid');
+            container.innerHTML = '';
+            for (let i = 1; i <= 500; i++) {
+                const btn = document.createElement('button');
+                btn.className = 'card-btn';
+                btn.textContent = i;
+                if (myCards.some(c => c.id === i)) {
+                    btn.classList.add('owned');
+                }
+                btn.onclick = () => autoBuyCard(i);
+                container.appendChild(btn);
+            }
+        }
+        
+        async function autoBuyCard(cardId) {
+            if (isProcessingBuy) return;
+            if (myCards.some(c => c.id === cardId)) {
+                showPopup('❌ You already own this card!');
+                return;
+            }
+            if (myCards.length >= 2) {
+                showPopup('⚠️ Maximum 2 cards per player!');
+                return;
+            }
+            if (!deductBalance(10)) {
+                showPopup('❌ Insufficient balance! Use /deposit');
+                document.getElementById('balance').classList.add('insufficient');
+                setTimeout(() => document.getElementById('balance').classList.remove('insufficient'), 500);
+                return;
+            }
+            
+            isProcessingBuy = true;
+            const card = allCards.find(c => c.id === cardId);
+            myCards.push(card);
+            
+            // Update button to show owned
+            const btn = document.querySelector(`.card-btn:not(.owned)`);
+            const allBtns = document.querySelectorAll('.card-btn');
+            for (let b of allBtns) {
+                if (parseInt(b.textContent) === cardId) {
+                    b.classList.add('owned');
+                    break;
+                }
+            }
+            
+            updateBalanceDisplay();
+            displayMyCards();
+            document.getElementById('myCardsSection').classList.remove('hidden');
+            showPopup(`✅ Card ${card.id} purchased! Balance: ${balance.toFixed(2)} ETB`);
+            if (tg) tg.HapticFeedback?.notificationOccurred('success');
+            
+            if (myCards.length === 1) startCountdown();
+            isProcessingBuy = false;
+        }
+        
+        function displayMyCards() {
+            const container = document.getElementById('myCardsList');
+            container.innerHTML = '';
+            myCards.forEach(card => {
+                const div = document.createElement('div');
+                div.className = 'player-card';
+                let gridHtml = '<div class="player-card-grid">';
+                for (let row = 0; row < 5; row++) {
+                    for (let col = 0; col < 5; col++) {
+                        const val = card.grid[row][col];
+                        gridHtml += `<div class="player-cell ${val === 0 ? 'free' : ''}">${val === 0 ? '⭐' : val}</div>`;
+                    }
+                }
+                gridHtml += '</div>';
+                div.innerHTML = `<div style="margin-bottom:4px; font-size:9px; color:#aaa;">Board #${card.id}</div>${gridHtml}`;
+                container.appendChild(div);
+            });
+        }
+        
+        function startCountdown() {
+            if (myCards.length === 0) return;
+            countdown = 30;
+            const countdownDiv = document.getElementById('countdownSection');
+            const countdownEl = document.getElementById('countdownTimer');
+            countdownDiv.classList.remove('hidden');
+            if (countdownInterval) clearInterval(countdownInterval);
+            countdownInterval = setInterval(() => {
+                countdown--;
+                countdownEl.textContent = countdown;
+                if (countdown <= 0) {
+                    clearInterval(countdownInterval);
+                    countdownDiv.classList.add('hidden');
+                    startGame();
+                }
+            }, 1000);
+        }
+        
+        function startGame() {
+            if (myCards.length === 0) { showPopup('⚠️ Buy at least one card!'); return; }
+            gameActive = true;
+            calledNumbers = [];
+            document.getElementById('lobbyView').classList.add('hidden');
+            document.getElementById('gameView').classList.remove('hidden');
+            buildMasterGrid();
+            displayPlayingCards();
+            startCalling();
+            showPopup('🎮 Game Started! Click BINGO when you have a winning pattern!');
+        }
+        
+        function buildMasterGrid() {
+            const grid = document.getElementById('masterGrid');
+            grid.innerHTML = '';
+            for (let row = 1; row <= 15; row++) {
+                const masterRow = document.createElement('div');
+                masterRow.className = 'master-row';
+                let num = row;
+                for (let col = 0; col < 5; col++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'master-cell';
+                    cell.id = `cell-${num}`;
+                    cell.textContent = num;
+                    masterRow.appendChild(cell);
+                    num += 15;
+                }
+                grid.appendChild(masterRow);
+            }
+        }
+        
+        function displayPlayingCards() {
+            const container = document.getElementById('playerCardsContainer');
+            container.innerHTML = '';
+            myCards.forEach(card => {
+                const div = document.createElement('div');
+                div.className = 'player-card';
+                let gridHtml = '<div class="player-card-grid">';
+                for (let row = 0; row < 5; row++) {
+                    for (let col = 0; col < 5; col++) {
+                        const val = card.grid[row][col];
+                        gridHtml += `<div id="pc-${card.id}-${row}-${col}" class="player-cell ${val === 0 ? 'free' : ''}">${val === 0 ? '⭐' : val}</div>`;
+                    }
+                }
+                gridHtml += '</div>';
+                div.innerHTML = `<div style="margin-bottom:4px; font-size:9px;">Board #${card.id}</div>${gridHtml}`;
+                container.appendChild(div);
+            });
+        }
+        
+        function startCalling() {
+            let available = [];
+            for (let i = 1; i <= 75; i++) available.push(i);
+            if (callInterval) clearInterval(callInterval);
+            callInterval = setInterval(() => {
+                if (!gameActive) return;
+                if (available.length === 0) { endGame('GAME OVER!'); return; }
+                const idx = Math.floor(Math.random() * available.length);
+                const num = available.splice(idx, 1)[0];
+                callNumber(num);
+            }, 3000);
+        }
+        
+        function callNumber(num) {
+            calledNumbers.push(num);
+            let letter = '';
+            if (num < 16) letter = 'B';
+            else if (num < 31) letter = 'I';
+            else if (num < 46) letter = 'N';
+            else if (num < 61) letter = 'G';
+            else letter = 'O';
+            
+            const callEl = document.getElementById('currentCall');
+            callEl.textContent = `${letter}-${num}`;
+            callEl.style.animation = 'none';
+            setTimeout(() => callEl.style.animation = 'ballPop 0.4s ease', 10);
+            
+            const history = document.getElementById('historyCalls');
+            const lastThree = calledNumbers.slice(-3);
+            history.innerHTML = '';
+            lastThree.forEach(n => {
+                let l = '';
+                if (n < 16) l = 'B';
+                else if (n < 31) l = 'I';
+                else if (n < 46) l = 'N';
+                else if (n < 61) l = 'G';
+                else l = 'O';
+                const ball = document.createElement('div');
+                ball.className = `history-ball ball-${l.toLowerCase()}`;
+                ball.textContent = `${l}-${n}`;
+                history.appendChild(ball);
+            });
+            
+            const masterCell = document.getElementById(`cell-${num}`);
+            if (masterCell) masterCell.classList.add('called');
+            
+            myCards.forEach(card => {
+                for (let row = 0; row < 5; row++) {
+                    for (let col = 0; col < 5; col++) {
+                        if (card.grid[row][col] === num) {
+                            const cell = document.getElementById(`pc-${card.id}-${row}-${col}`);
+                            if (cell) cell.classList.add('marked');
+                        }
+                    }
+                }
+            });
+        }
+        
+        function hasWinningPattern(card) {
+            const grid = card.grid;
+            for (let row = 0; row < 5; row++) {
+                let complete = true;
+                for (let col = 0; col < 5; col++) {
+                    const val = grid[row][col];
+                    if (val !== 0 && !calledNumbers.includes(val)) { complete = false; break; }
+                }
+                if (complete) return true;
+            }
+            for (let col = 0; col < 5; col++) {
+                let complete = true;
+                for (let row = 0; row < 5; row++) {
+                    const val = grid[row][col];
+                    if (val !== 0 && !calledNumbers.includes(val)) { complete = false; break; }
+                }
+                if (complete) return true;
+            }
+            let diag1 = true, diag2 = true;
+            for (let i = 0; i < 5; i++) {
+                if (grid[i][i] !== 0 && !calledNumbers.includes(grid[i][i])) diag1 = false;
+                if (grid[i][4-i] !== 0 && !calledNumbers.includes(grid[i][4-i])) diag2 = false;
+            }
+            if (diag1 || diag2) return true;
+            return false;
+        }
+        
+        function claimBingo() {
+            if (!gameActive) { showPopup('Game not active!'); return; }
+            if (calledNumbers.length < 4) { showPopup('⚠️ Wait for at least 4 numbers to be called!'); return; }
+            
+            for (const card of myCards) {
+                if (hasWinningPattern(card)) {
+                    declareWinner(card);
+                    return;
+                }
+            }
+            showPopup('❌ No winning pattern found! Keep playing.');
+            if (tg) tg.HapticFeedback?.notificationOccurred('error');
+        }
+        
+        function declareWinner(card) {
+            gameActive = false;
+            clearInterval(callInterval);
+            const winAmount = 500;
+            addBalance(winAmount);
+            recordWin(winAmount, balance);
+            
+            document.getElementById('winnerMessage').innerHTML = `🎉 YOU WON! 🎉<br>Board #${card.id}<br>Prize: ${winAmount} ETB<br><br>New Balance: ${balance.toFixed(2)} ETB`;
+            document.getElementById('winnerModal').style.display = 'flex';
+            if (typeof confetti === 'function') confetti({ particleCount: 150, spread: 70 });
+            if (tg) tg.HapticFeedback?.notificationOccurred('success');
+            showPopup(`🎉 BINGO! You won ${winAmount} ETB!`);
+        }
+        
+        function resetGame() {
+            gameActive = false;
+            clearInterval(callInterval);
+            calledNumbers = [];
+            document.getElementById('gameView').classList.add('hidden');
+            document.getElementById('lobbyView').classList.remove('hidden');
+            document.getElementById('countdownSection').classList.add('hidden');
+            if (countdownInterval) clearInterval(countdownInterval);
+            if (myCards.length > 0) {
+                displayMyCards();
+                document.getElementById('myCardsSection').classList.remove('hidden');
+            } else {
+                document.getElementById('myCardsSection').classList.add('hidden');
+            }
+            buildCardsGrid();
+            showPopup('Game reset! Tap cards to buy and play again.');
+        }
+        
+        function resetAllCards() {
+            if (myCards.length === 0) {
+                showPopup('No cards to reset!');
+                return;
+            }
+            // Refund card costs (10 ETB per card)
+            const refundAmount = myCards.length * 10;
+            balance += refundAmount;
+            myCards = [];
+            updateBalanceDisplay();
+            updateBalanceOnServer(balance);
+            buildCardsGrid();
+            document.getElementById('myCardsSection').classList.add('hidden');
+            document.getElementById('myCardsList').innerHTML = '';
+            document.getElementById('countdownSection').classList.add('hidden');
+            if (countdownInterval) clearInterval(countdownInterval);
+            if (callInterval) clearInterval(callInterval);
+            gameActive = false;
+            showPopup(`🔄 All cards reset! Refunded ${refundAmount} ETB. Tap new cards to play.`);
+        }
+        
+        function showPopup(msg) {
+            const popup = document.getElementById('popup');
+            popup.textContent = msg;
+            popup.style.display = 'block';
+            setTimeout(() => popup.style.display = 'none', 2500);
+        }
+        
+        // Event listeners
+        document.getElementById('resetBtn').onclick = resetAllCards;
+        document.getElementById('bingoBtn').onclick = claimBingo;
+        document.getElementById('closeModalBtn').onclick = () => {
+            document.getElementById('winnerModal').style.display = 'none';
+            resetGame();
+        };
+        
+        // Initialize
+        generateAllCards();
+        buildCardsGrid();
+        loadUserData().then(() => {
+            updateBalanceDisplay();
+            if (myCards.length > 0) {
+                displayMyCards();
+                document.getElementById('myCardsSection').classList.remove('hidden');
+                // Don't auto-start countdown - wait for user to buy cards
+            }
+            showPopup(`🎯 Welcome ${firstName || 'Player'}! Tap any card to buy (10 ETB each, max 2 cards)`);
+        });
+        
+        if (tg) {
+            tg.MainButton.setText("BUY CARDS");
+            tg.MainButton.show();
+            tg.MainButton.onClick(() => { if (!gameActive) showPopup('Tap a card number to buy!'); });
+        }
+    </script>
+</body>
+</html>
