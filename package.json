@@ -1,25 +1,13 @@
 {
   "name": "logo-bing-bot",
   "version": "1.0.0",
-  "description": "Logo Bing Bingo - Telegram Bot Controlled Bingo Game",
   "main": "bot.js",
   "scripts": {
-    "start": "node bot.js",
-    "dev": "nodemon bot.js"
+    "start": "node bot.js"
   },
-  "keywords": ["telegram", "bingo", "game", "bot", "telegraf"],
-  "author": "Logo Bing",
-  "license": "MIT",
   "dependencies": {
     "telegraf": "^4.15.3",
     "express": "^4.18.2",
-    "cors": "^2.8.5",
-    "node-cron": "^3.0.3"
-  },
-  "devDependencies": {
-    "nodemon": "^3.0.1"
-  },
-  "engines": {
-    "node": ">=16.0.0"
+    "cors": "^2.8.5"
   }
 }
