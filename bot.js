@@ -1,6 +1,6 @@
 /**
  * LOGO BING BINGO - TELEGRAM BOT
- * Complete Working Version with All Commands
+ * Complete Production Version with Persistent Storage
  */
 
 const { Telegraf, Markup } = require('telegraf');
@@ -8,24 +8,16 @@ const express = require('express');
 const cors = require('cors');
 
 // ============================================
-// CONFIGURATION - UPDATE THESE VALUES
+// CONFIGURATION
 // ============================================
-
-// Your Telegram Bot Token from @BotFather
 const BOT_TOKEN = '8762888807:AAHFSr4vrIME6cB8hY9JY8um8a2QR2zYORs';
-
-// Your Netlify Frontend URL
-const WEBAPP_URL = 'https://fanciful-caramel-1a3436.netlify.app/';
-
-// Your Render Backend API URL (Java Spring Boot)
+const WEBAPP_URL = 'https://beautiful-sundae-eb636f.netlify.app/';
 const API_URL = 'https://logo-bingo-complete-gfdjsdo.onrender.com';
-
 const PORT = process.env.PORT || 10000;
 
 // ============================================
-// DATABASE (In-Memory)
+// DATABASE (In-Memory with API Sync)
 // ============================================
-
 const users = new Map();
 const pendingDeposits = new Map();
 const pendingWithdrawals = new Map();
@@ -33,19 +25,68 @@ const pendingWithdrawals = new Map();
 // ============================================
 // INITIALIZATION
 // ============================================
-
 const bot = new Telegraf(BOT_TOKEN);
 const app = express();
 app.use(cors());
 app.use(express.json());
 
 // ============================================
+// API CALLS TO BACKEND FOR PERSISTENCE
+// ============================================
+
+async function syncUserToBackend(telegramId) {
+    const user = users.get(telegramId);
+    if (!user) return;
+    
+    try {
+        await fetch(`${API_URL}/api/user/sync`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                telegramId: user.id,
+                username: user.username,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                phoneNumber: user.phoneNumber,
+                registered: user.registered,
+                balance: user.balance,
+                totalDeposited: user.totalDeposited,
+                totalWithdrawn: user.totalWithdrawn,
+                totalWon: user.totalWon,
+                totalBet: user.totalBet,
+                gamesPlayed: user.gamesPlayed,
+                gamesWon: user.gamesWon
+            })
+        });
+    } catch(e) { console.error('Sync error:', e); }
+}
+
+async function loadUserFromBackend(telegramId) {
+    try {
+        const response = await fetch(`${API_URL}/api/user/${telegramId}`);
+        const data = await response.json();
+        if (data.success && data.user) {
+            users.set(telegramId, data.user);
+            return data.user;
+        }
+    } catch(e) { console.error('Load error:', e); }
+    return null;
+}
+
+// ============================================
 // HELPER FUNCTIONS
 // ============================================
 
-function getUser(telegramId) {
+async function getUser(telegramId) {
     if (!users.has(telegramId)) {
-        users.set(telegramId, {
+        // Try to load from backend first
+        const backendUser = await loadUserFromBackend(telegramId);
+        if (backendUser) {
+            return backendUser;
+        }
+        
+        // Create new user
+        const newUser = {
             id: telegramId,
             username: null,
             firstName: null,
@@ -60,7 +101,9 @@ function getUser(telegramId) {
             gamesPlayed: 0,
             gamesWon: 0,
             createdAt: new Date()
-        });
+        };
+        users.set(telegramId, newUser);
+        return newUser;
     }
     return users.get(telegramId);
 }
@@ -78,14 +121,12 @@ function isAdmin(telegramId) {
 // BOT COMMANDS
 // ============================================
 
-// /start command
 bot.command('start', async (ctx) => {
-    const user = getUser(ctx.from.id);
+    const user = await getUser(ctx.from.id);
     user.username = ctx.from.username;
     user.firstName = ctx.from.first_name;
     user.lastName = ctx.from.last_name;
     
-    // Check if user is already registered
     if (user.registered) {
         await ctx.reply(
             `✅ <b>You are already registered!</b>\n\n` +
@@ -94,13 +135,15 @@ bot.command('start', async (ctx) => {
             `Use /play to start playing! 🎮`,
             { parse_mode: 'HTML' }
         );
+        await syncUserToBackend(ctx.from.id);
         return;
     }
     
-    // New user - give 10 ETB welcome bonus
+    // New user - give 10 ETB welcome bonus ONLY ONCE
     user.registered = true;
     user.balance = 10;
     user.totalDeposited = 10;
+    await syncUserToBackend(ctx.from.id);
     
     const message = `
 🎯 <b>WELCOME TO LOGO BING BINGO!</b> 🎯
@@ -143,9 +186,8 @@ Click /play to start playing! 🎯
     await ctx.reply(message, { parse_mode: 'HTML' });
 });
 
-// /play command
 bot.command('play', async (ctx) => {
-    const user = getUser(ctx.from.id);
+    const user = await getUser(ctx.from.id);
     
     if (!user.registered) {
         await ctx.reply('⚠️ Please use /start first to register and get your welcome bonus!');
@@ -181,9 +223,8 @@ Click the button below to launch the game!
     await ctx.reply(message, { parse_mode: 'HTML', ...keyboard });
 });
 
-// /register command
 bot.command('register', async (ctx) => {
-    const user = getUser(ctx.from.id);
+    const user = await getUser(ctx.from.id);
     
     if (user.registered && user.phoneNumber) {
         await ctx.reply(
@@ -209,9 +250,8 @@ bot.command('register', async (ctx) => {
     );
 });
 
-// Handle phone number sharing
 bot.on('contact', async (ctx) => {
-    const user = getUser(ctx.from.id);
+    const user = await getUser(ctx.from.id);
     const contact = ctx.message.contact;
     
     user.phoneNumber = contact.phone_number;
@@ -222,6 +262,8 @@ bot.on('contact', async (ctx) => {
         user.totalDeposited = 10;
     }
     
+    await syncUserToBackend(ctx.from.id);
+    
     await ctx.reply(
         `✅ <b>Registration Complete!</b>\n\n` +
         `📱 Phone: ${user.phoneNumber}\n` +
@@ -231,14 +273,15 @@ bot.on('contact', async (ctx) => {
     );
 });
 
-// /balance command
 bot.command('balance', async (ctx) => {
-    const user = getUser(ctx.from.id);
+    const user = await getUser(ctx.from.id);
     
     if (!user.registered) {
         await ctx.reply('⚠️ Please use /start first to register!');
         return;
     }
+    
+    await syncUserToBackend(ctx.from.id);
     
     const message = `
 💰 <b>YOUR WALLET DETAILS</b> 💰
@@ -263,9 +306,8 @@ Use /deposit to add funds or /withdraw to cash out!
     await ctx.reply(message, { parse_mode: 'HTML' });
 });
 
-// /deposit command
 bot.command('deposit', async (ctx) => {
-    const user = getUser(ctx.from.id);
+    const user = await getUser(ctx.from.id);
     const args = ctx.message.text.split(' ');
     
     if (!user.registered) {
@@ -336,7 +378,6 @@ bot.command('deposit', async (ctx) => {
         { parse_mode: 'HTML' }
     );
     
-    // Notify admins
     for (const adminId of ['1765057062', '1044688332', '6499874707']) {
         try {
             await bot.telegram.sendMessage(adminId,
@@ -347,9 +388,8 @@ bot.command('deposit', async (ctx) => {
     }
 });
 
-// /withdraw command
 bot.command('withdraw', async (ctx) => {
-    const user = getUser(ctx.from.id);
+    const user = await getUser(ctx.from.id);
     const args = ctx.message.text.split(' ');
     
     if (!user.registered) {
@@ -405,7 +445,6 @@ bot.command('withdraw', async (ctx) => {
         { parse_mode: 'HTML' }
     );
     
-    // Notify admins
     for (const adminId of ['1765057062', '1044688332', '6499874707']) {
         try {
             await bot.telegram.sendMessage(adminId,
@@ -416,9 +455,8 @@ bot.command('withdraw', async (ctx) => {
     }
 });
 
-// /help command
 bot.command('help', async (ctx) => {
-    const user = getUser(ctx.from.id);
+    const user = await getUser(ctx.from.id);
     const isUserAdmin = isAdmin(ctx.from.id);
     
     let message = `
@@ -428,7 +466,7 @@ bot.command('help', async (ctx) => {
 <b>🎮 PLAYER COMMANDS:</b>
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-/start - 🎯 Register and get 10 ETB bonus
+/start - 🎯 Register and get 10 ETB bonus (ONLY ONCE)
 /play - 🎮 Launch the game
 /register - 📝 Complete registration with phone
 /deposit - 💰 Deposit funds via Telebirr
@@ -468,106 +506,63 @@ bot.command('help', async (ctx) => {
 // ============================================
 
 bot.command('approve_deposit', async (ctx) => {
-    if (!isAdmin(ctx.from.id)) {
-        await ctx.reply('❌ Admin only command!');
-        return;
-    }
-    
+    if (!isAdmin(ctx.from.id)) return;
     const args = ctx.message.text.split(' ');
-    if (args.length < 2) {
-        await ctx.reply('Usage: /approve_deposit [REQUEST_ID]');
-        return;
-    }
+    if (args.length < 2) return;
     
     const depositId = args[1];
     const deposit = pendingDeposits.get(depositId);
+    if (!deposit) return;
     
-    if (!deposit) {
-        await ctx.reply('❌ Deposit request not found!');
-        return;
-    }
-    
-    const user = getUser(deposit.userId);
+    const user = await getUser(deposit.userId);
     user.balance += deposit.amount;
     user.totalDeposited += deposit.amount;
+    await syncUserToBackend(deposit.userId);
     pendingDeposits.delete(depositId);
     
     await ctx.reply(`✅ Deposit approved! +${deposit.amount} ETB`);
-    
-    try {
-        await bot.telegram.sendMessage(user.id,
-            `✅ <b>DEPOSIT APPROVED!</b>\n\n` +
-            `💰 Amount: ${deposit.amount} ETB\n` +
-            `💵 New Balance: ${formatBalance(user.balance)}\n\n` +
-            `Use /play to start playing! 🎮`,
-            { parse_mode: 'HTML' }
-        );
-    } catch(e) {}
+    await bot.telegram.sendMessage(user.id, `✅ Deposit approved! +${deposit.amount} ETB\nNew balance: ${formatBalance(user.balance)}`);
 });
 
 bot.command('approve_withdraw', async (ctx) => {
-    if (!isAdmin(ctx.from.id)) {
-        await ctx.reply('❌ Admin only command!');
-        return;
-    }
-    
+    if (!isAdmin(ctx.from.id)) return;
     const args = ctx.message.text.split(' ');
-    if (args.length < 2) {
-        await ctx.reply('Usage: /approve_withdraw [REQUEST_ID]');
-        return;
-    }
+    if (args.length < 2) return;
     
     const withdrawalId = args[1];
     const withdrawal = pendingWithdrawals.get(withdrawalId);
+    if (!withdrawal) return;
     
-    if (!withdrawal) {
-        await ctx.reply('❌ Withdrawal request not found!');
-        return;
-    }
-    
-    const user = getUser(withdrawal.userId);
+    const user = await getUser(withdrawal.userId);
     user.balance -= withdrawal.amount;
     user.totalWithdrawn += withdrawal.amount;
+    await syncUserToBackend(withdrawal.userId);
     pendingWithdrawals.delete(withdrawalId);
     
     await ctx.reply(`✅ Withdrawal approved! -${withdrawal.amount} ETB`);
-    
-    try {
-        await bot.telegram.sendMessage(user.id,
-            `✅ <b>WITHDRAWAL APPROVED!</b>\n\n` +
-            `💰 Amount: ${withdrawal.amount} ETB\n` +
-            `💵 New Balance: ${formatBalance(user.balance)}`,
-            { parse_mode: 'HTML' }
-        );
-    } catch(e) {}
+    await bot.telegram.sendMessage(user.id, `✅ Withdrawal approved!\nNew balance: ${formatBalance(user.balance)}`);
 });
 
 bot.command('pending_deposits', async (ctx) => {
     if (!isAdmin(ctx.from.id)) return;
-    if (pendingDeposits.size === 0) {
-        await ctx.reply('✅ No pending deposits.');
-        return;
-    }
+    if (pendingDeposits.size === 0) return ctx.reply('✅ No pending deposits.');
     
-    let msg = '📋 <b>Pending Deposits</b>\n\n';
+    let msg = '📋 Pending Deposits:\n\n';
     for (const [id, d] of pendingDeposits) {
         msg += `📝 ID: ${id}\n👤 User: ${d.userId}\n💰 Amount: ${d.amount} ETB\n🔢 TXN: ${d.transactionId}\n\n`;
     }
-    await ctx.reply(msg, { parse_mode: 'HTML' });
+    await ctx.reply(msg);
 });
 
 bot.command('pending_withdrawals', async (ctx) => {
     if (!isAdmin(ctx.from.id)) return;
-    if (pendingWithdrawals.size === 0) {
-        await ctx.reply('✅ No pending withdrawals.');
-        return;
-    }
+    if (pendingWithdrawals.size === 0) return ctx.reply('✅ No pending withdrawals.');
     
-    let msg = '📋 <b>Pending Withdrawals</b>\n\n';
+    let msg = '📋 Pending Withdrawals:\n\n';
     for (const [id, w] of pendingWithdrawals) {
         msg += `📝 ID: ${id}\n👤 User: ${w.userId}\n💰 Amount: ${w.amount} ETB\n📱 Phone: ${w.phoneNumber}\n\n`;
     }
-    await ctx.reply(msg, { parse_mode: 'HTML' });
+    await ctx.reply(msg);
 });
 
 bot.command('stats', async (ctx) => {
@@ -582,39 +577,39 @@ bot.command('stats', async (ctx) => {
     }
     
     await ctx.reply(
-        `📊 <b>Game Statistics</b>\n\n` +
+        `📊 Game Statistics\n\n` +
         `👥 Total Users: ${users.size}\n` +
         `✅ Registered: ${registered}\n` +
         `💰 Total Balance: ${formatBalance(totalBalance)}\n` +
         `🎮 Games Played: ${totalGames}\n` +
         `🏆 Games Won: ${totalWins}\n` +
         `⏳ Pending Deposits: ${pendingDeposits.size}\n` +
-        `⏳ Pending Withdrawals: ${pendingWithdrawals.size}`,
-        { parse_mode: 'HTML' }
+        `⏳ Pending Withdrawals: ${pendingWithdrawals.size}`
     );
 });
 
 // ============================================
-// API ENDPOINTS for Frontend
+// API ENDPOINTS
 // ============================================
 
 app.get('/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-app.get('/api/user/:telegramId', (req, res) => {
-    const user = getUser(req.params.telegramId);
-    res.json({
-        success: true,
-        balance: user.balance,
-        firstName: user.firstName || 'Player',
-        registered: user.registered
-    });
+app.get('/api/user/:telegramId', async (req, res) => {
+    const user = await getUser(req.params.telegramId);
+    res.json({ success: true, user: user });
 });
 
-app.post('/api/game', (req, res) => {
+app.post('/api/user/sync', async (req, res) => {
+    const userData = req.body;
+    users.set(userData.telegramId, userData);
+    res.json({ success: true });
+});
+
+app.post('/api/game', async (req, res) => {
     const { telegramId, action, data } = req.body;
-    const user = getUser(telegramId);
+    const user = await getUser(telegramId);
     
     if (action === 'updateBalance') {
         user.balance = data.balance;
@@ -625,6 +620,7 @@ app.post('/api/game', (req, res) => {
         user.gamesWon++;
         user.gamesPlayed++;
     }
+    await syncUserToBackend(telegramId);
     res.json({ success: true });
 });
 
@@ -633,24 +629,13 @@ app.post('/webhook', async (req, res) => {
         await bot.handleUpdate(req.body);
         res.sendStatus(200);
     } catch (error) {
-        console.error('Webhook error:', error);
         res.sendStatus(500);
     }
 });
 
-// ============================================
-// START SERVER
-// ============================================
-
 app.listen(PORT, () => {
     console.log(`✅ Bot running on port ${PORT}`);
     console.log(`🎮 WebApp URL: ${WEBAPP_URL}`);
-    console.log(`📱 Admin IDs: 1765057062, 1044688332, 6499874707`);
 });
 
 bot.launch();
-console.log('🤖 Bot started successfully');
-
-// Graceful stop
-process.once('SIGINT', () => bot.stop('SIGINT'));
-process.once('SIGTERM', () => bot.stop('SIGTERM'));

@@ -27,7 +27,6 @@
             margin: 0 auto;
         }
 
-        /* Header */
         .header {
             text-align: center;
             margin-bottom: 8px;
@@ -42,7 +41,6 @@
             background-clip: text;
         }
 
-        /* Stats Row */
         .stats-row {
             display: flex;
             gap: 8px;
@@ -71,7 +69,6 @@
             color: #00d4ff;
         }
 
-        /* Section */
         .section {
             background: rgba(0, 0, 0, 0.3);
             backdrop-filter: blur(10px);
@@ -87,7 +84,6 @@
             color: #aaaaaa;
         }
 
-        /* Cards Grid - 5 columns for mobile */
         .cards-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
@@ -118,7 +114,6 @@
             cursor: default;
         }
 
-        /* Preview Grid */
         .preview-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
@@ -145,7 +140,6 @@
             color: white;
         }
 
-        /* Buttons */
         .btn {
             width: 100%;
             padding: 10px;
@@ -177,7 +171,6 @@
             margin-top: 8px;
         }
 
-        /* Countdown */
         .countdown {
             text-align: center;
             padding: 10px;
@@ -192,7 +185,6 @@
             color: #2ecc71;
         }
 
-        /* Game Layout - Side by Side */
         .game-layout {
             display: flex;
             gap: 8px;
@@ -209,7 +201,6 @@
             min-width: 140px;
         }
 
-        /* Master Board */
         .master-board {
             background: rgba(0, 0, 0, 0.3);
             border-radius: 12px;
@@ -265,7 +256,6 @@
             color: #000;
         }
 
-        /* Game Sidebar */
         .game-sidebar-inner {
             background: rgba(0, 0, 0, 0.3);
             border-radius: 12px;
@@ -293,7 +283,6 @@
             margin-top: 4px;
         }
 
-        /* History */
         .history {
             display: flex;
             gap: 5px;
@@ -319,7 +308,6 @@
         .ball-g { background: #e74c3c; }
         .ball-o { background: #9b59b6; }
 
-        /* Player Cards */
         .player-cards-scroll {
             max-height: 180px;
             overflow-y: auto;
@@ -347,6 +335,12 @@
             border-radius: 5px;
             font-size: 9px;
             font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .player-cell:active {
+            transform: scale(0.95);
         }
 
         .player-cell.marked {
@@ -357,9 +351,9 @@
         .player-cell.free {
             background: #f39c12;
             color: white;
+            cursor: default;
         }
 
-        /* Bingo Button */
         .bingo-btn {
             width: 100%;
             padding: 10px;
@@ -373,7 +367,6 @@
             margin-top: 8px;
         }
 
-        /* Popup */
         .popup {
             position: fixed;
             bottom: 20px;
@@ -388,7 +381,6 @@
             white-space: nowrap;
         }
 
-        /* Modal */
         .modal {
             position: fixed;
             top: 0;
@@ -416,6 +408,14 @@
             font-size: 32px;
             margin-bottom: 10px;
             color: #ffeb3b;
+        }
+
+        .winner-name-highlight {
+            background: #2ecc71;
+            padding: 4px 12px;
+            border-radius: 20px;
+            display: inline-block;
+            margin: 5px 0;
         }
 
         .hidden {
@@ -494,7 +494,7 @@
     <div class="modal" id="winnerModal">
         <div class="modal-content">
             <h2>🎉 BINGO!</h2>
-            <p id="winnerMessage"></p>
+            <div id="winnerMessage"></div>
             <button class="btn btn-primary" id="closeModalBtn">PLAY AGAIN</button>
         </div>
     </div>
@@ -526,6 +526,7 @@
         let countdownInterval = null;
         let countdown = 30;
         let isProcessingBuy = false;
+        let winnerName = '';
 
         // ============================================
         // API CALLS
@@ -535,26 +536,21 @@
             try {
                 const response = await fetch(`${BACKEND_URL}/api/user/${telegramId}`);
                 const data = await response.json();
-                if (data.success) {
-                    balance = data.balance;
-                    firstName = data.firstName;
+                if (data.success && data.user) {
+                    balance = data.user.balance;
+                    firstName = data.user.firstName || 'Player';
+                    updateBalanceDisplay();
+                    console.log('User loaded - Balance:', balance);
+                } else {
+                    balance = 10;
+                    firstName = 'Player';
                     updateBalanceDisplay();
                 }
             } catch(error) {
-                // First time user - give 10 ETB starting balance
+                console.error('API error:', error);
                 balance = 10;
                 firstName = 'Player';
                 updateBalanceDisplay();
-                // Register new user with 10 ETB
-                await fetch(`${BACKEND_URL}/api/game`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        telegramId: telegramId,
-                        action: 'updateBalance',
-                        data: { balance: 10, betAmount: 0 }
-                    })
-                });
             }
         }
         
@@ -570,7 +566,7 @@
                     })
                 });
             } catch(error) {
-                console.error('Failed to update balance:', error);
+                console.error('Update balance error:', error);
             }
         }
         
@@ -586,7 +582,7 @@
                     })
                 });
             } catch(error) {
-                console.error('Failed to record win:', error);
+                console.error('Record win error:', error);
             }
         }
 
@@ -617,6 +613,7 @@
         // ============================================
         
         function generateAllCards() {
+            console.log('Generating 500 cards...');
             for (let i = 1; i <= 500; i++) {
                 allCards.push({ id: i, grid: generateGrid() });
             }
@@ -704,12 +701,30 @@
                 for (let row = 0; row < 5; row++) {
                     for (let col = 0; col < 5; col++) {
                         const val = card.grid[row][col];
-                        gridHtml += `<div class="player-cell ${val === 0 ? 'free' : ''}">${val === 0 ? '⭐' : val}</div>`;
+                        gridHtml += `<div class="player-cell ${val === 0 ? 'free' : ''}" data-value="${val}">${val === 0 ? '⭐' : val}</div>`;
                     }
                 }
                 gridHtml += '</div>';
                 div.innerHTML = `<div style="margin-bottom:3px; font-size:8px;">Board #${card.id}</div>${gridHtml}`;
                 container.appendChild(div);
+                
+                // Add click handlers for manual marking
+                const cells = div.querySelectorAll('.player-cell:not(.free)');
+                cells.forEach(cell => {
+                    cell.onclick = (e) => {
+                        e.stopPropagation();
+                        if (!gameActive) {
+                            showPopup('Game not started yet!');
+                            return;
+                        }
+                        const value = parseInt(cell.dataset.value);
+                        if (calledNumbers.includes(value)) {
+                            cell.classList.add('marked');
+                        } else {
+                            showPopup('❌ This number has not been called yet!');
+                        }
+                    };
+                });
             });
         }
 
@@ -748,7 +763,7 @@
             buildMasterGrid();
             displayPlayingCards();
             startCalling();
-            showPopup('🎮 Game Started! Click BINGO to win!');
+            showPopup('🎮 Game Started! Mark your numbers manually!');
         }
         
         function buildMasterGrid() {
@@ -780,12 +795,30 @@
                 for (let row = 0; row < 5; row++) {
                     for (let col = 0; col < 5; col++) {
                         const val = card.grid[row][col];
-                        gridHtml += `<div id="pc-${card.id}-${row}-${col}" class="player-cell ${val === 0 ? 'free' : ''}">${val === 0 ? '⭐' : val}</div>`;
+                        gridHtml += `<div id="pc-${card.id}-${row}-${col}" class="player-cell ${val === 0 ? 'free' : ''}" data-value="${val}">${val === 0 ? '⭐' : val}</div>`;
                     }
                 }
                 gridHtml += '</div>';
-                div.innerHTML = `<div style="margin-bottom:3px; font-size:8px;">#${card.id}</div>${gridHtml}`;
+                div.innerHTML = `<div style="margin-bottom:3px; font-size:8px;">Board #${card.id}</div>${gridHtml}`;
                 container.appendChild(div);
+                
+                // Add click handlers for manual marking during game
+                const cells = div.querySelectorAll('.player-cell:not(.free)');
+                cells.forEach(cell => {
+                    cell.onclick = (e) => {
+                        e.stopPropagation();
+                        if (!gameActive) {
+                            showPopup('Game not active!');
+                            return;
+                        }
+                        const value = parseInt(cell.dataset.value);
+                        if (calledNumbers.includes(value)) {
+                            cell.classList.add('marked');
+                        } else {
+                            showPopup('❌ This number has not been called yet!');
+                        }
+                    };
+                });
             });
         }
         
@@ -832,6 +865,7 @@
             const masterCell = document.getElementById(`cell-${num}`);
             if (masterCell) masterCell.classList.add('called');
             
+            // Auto-mark on cards
             myCards.forEach(card => {
                 for (let row = 0; row < 5; row++) {
                     for (let col = 0; col < 5; col++) {
@@ -887,15 +921,69 @@
             showPopup('❌ No winning pattern! Keep playing.');
         }
         
-        function declareWinner(card) {
+        async function declareWinner(card) {
             gameActive = false;
             clearInterval(callInterval);
             const winAmount = 500;
             addBalance(winAmount);
-            recordWin(winAmount, balance);
-            document.getElementById('winnerMessage').innerHTML = `🎉 YOU WON! 🎉<br>Prize: ${winAmount} ETB<br>New Balance: ${balance.toFixed(2)} ETB`;
+            await recordWin(winAmount, balance);
+            
+            winnerName = firstName;
+            
+            // Show winner modal with full name
+            const winnerMessageDiv = document.getElementById('winnerMessage');
+            winnerMessageDiv.innerHTML = `
+                <div class="winner-name-highlight">🏆 ${winnerName} 🏆</div>
+                <p style="margin-top: 10px;">Board #${card.id}</p>
+                <p>Prize: ${winAmount} ETB</p>
+                <p>New Balance: ${balance.toFixed(2)} ETB</p>
+            `;
             document.getElementById('winnerModal').style.display = 'flex';
-            if (typeof confetti === 'function') confetti({ particleCount: 100, spread: 60 });
+            
+            if (typeof confetti === 'function') {
+                confetti({ particleCount: 150, spread: 70 });
+                setTimeout(() => {
+                    confetti({ particleCount: 100, spread: 50, origin: { y: 0.6, x: 0.2 } });
+                    confetti({ particleCount: 100, spread: 50, origin: { y: 0.6, x: 0.8 } });
+                }, 200);
+            }
+            
+            if (tg) tg.HapticFeedback?.notificationOccurred('success');
+            showPopup(`🎉 BINGO! ${winnerName} won ${winAmount} ETB!`);
+            
+            // Auto reset to card selection after 3 seconds
+            setTimeout(() => {
+                resetAfterWin();
+            }, 4000);
+        }
+        
+        function resetAfterWin() {
+            // Close modal
+            document.getElementById('winnerModal').style.display = 'none';
+            
+            // Reset all game state
+            gameActive = false;
+            clearInterval(callInterval);
+            clearInterval(countdownInterval);
+            calledNumbers = [];
+            myCards = [];
+            
+            // Reset UI
+            document.getElementById('gameView').classList.add('hidden');
+            document.getElementById('lobbyView').classList.remove('hidden');
+            document.getElementById('countdownSection').classList.add('hidden');
+            document.getElementById('myCardsSection').classList.add('hidden');
+            document.getElementById('myCardsList').innerHTML = '';
+            document.getElementById('playerCardsContainer').innerHTML = '';
+            document.getElementById('masterGrid').innerHTML = '';
+            document.getElementById('historyCalls').innerHTML = '';
+            document.getElementById('currentCall').textContent = '—';
+            
+            // Rebuild card grid
+            buildCardsGrid();
+            updateBalanceDisplay();
+            
+            showPopup('🔄 Game reset! Select new cards to play again.');
         }
         
         function resetGame() {
@@ -941,7 +1029,7 @@
         document.getElementById('bingoBtn').onclick = claimBingo;
         document.getElementById('closeModalBtn').onclick = () => {
             document.getElementById('winnerModal').style.display = 'none';
-            resetGame();
+            resetAfterWin();
         };
         
         generateAllCards();
@@ -952,7 +1040,7 @@
                 displayMyCards();
                 document.getElementById('myCardsSection').classList.remove('hidden');
             }
-            showPopup(`🎯 Welcome! Tap any card to buy (10 ETB each, max 2)`);
+            showPopup(`🎯 Welcome ${firstName}! Tap any card to buy (10 ETB each, max 2)`);
         });
         
         if (tg) {
