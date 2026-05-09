@@ -5,113 +5,448 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Logo Bing Bingo</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
-            color: #fff;
+            color: #ffffff;
             min-height: 100vh;
             padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+            overflow-x: hidden;
         }
-        .container { max-width: 100%; padding: 10px; margin: 0 auto; }
-        .header { text-align: center; margin-bottom: 12px; }
-        .logo { font-size: 22px; font-weight: 800; background: linear-gradient(135deg, #00d4ff, #ff6b6b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .stats-row { display: flex; gap: 10px; margin-bottom: 12px; }
-        .stat-card { flex: 1; background: rgba(0,0,0,0.4); backdrop-filter: blur(10px); border-radius: 14px; padding: 10px; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
-        .stat-label { font-size: 10px; color: #aaa; }
-        .stat-value { font-size: 18px; font-weight: bold; color: #00d4ff; }
-        .section { background: rgba(0,0,0,0.3); backdrop-filter: blur(10px); border-radius: 16px; padding: 12px; margin-bottom: 12px; }
-        .section-title { font-size: 12px; font-weight: 600; margin-bottom: 10px; color: #aaa; }
-        
-        /* Cards Grid */
-        .cards-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; max-height: 250px; overflow-y: auto; padding-right: 4px; }
-        .card-btn { aspect-ratio: 1; background: linear-gradient(135deg, #4a4e69, #22223b); border: none; border-radius: 10px; color: white; font-size: 14px; font-weight: bold; cursor: pointer; transition: all 0.2s; }
-        .card-btn:active { transform: scale(0.95); }
-        .card-btn.owned { background: linear-gradient(135deg, #2ecc71, #27ae60); opacity: 0.9; cursor: default; box-shadow: 0 0 8px #2ecc71; }
-        .card-btn.disabled { opacity: 0.5; cursor: not-allowed; }
-        
-        .preview-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; background: rgba(0,0,0,0.4); padding: 10px; border-radius: 14px; margin-bottom: 10px; }
-        .preview-cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.1); border-radius: 8px; font-size: 13px; font-weight: bold; }
-        .preview-free { background: #2ecc71; color: white; }
-        
-        .btn { width: 100%; padding: 12px; border: none; border-radius: 14px; font-weight: bold; font-size: 14px; cursor: pointer; transition: all 0.2s; }
-        .btn:active { transform: scale(0.98); }
-        .btn-primary { background: #2ecc71; color: white; }
-        .btn-secondary { background: rgba(255,255,255,0.1); color: white; }
-        .btn-danger { background: #e74c3c; color: white; }
-        .action-buttons { display: flex; gap: 10px; margin-top: 10px; }
-        
-        .countdown { text-align: center; padding: 15px; background: linear-gradient(135deg, rgba(46,204,113,0.2), rgba(46,204,113,0.05)); border-radius: 20px; margin-top: 12px; }
-        .countdown-number { font-size: 42px; font-weight: bold; color: #2ecc71; }
-        
-        /* Side-by-Side Layout */
-        .game-layout { display: flex; gap: 12px; flex-wrap: wrap; }
-        .game-board { flex: 1.2; min-width: 200px; }
-        .game-sidebar { flex: 1; min-width: 200px; }
-        
-        .master-board { background: rgba(0,0,0,0.3); border-radius: 16px; padding: 10px; }
-        .master-header { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-bottom: 8px; }
-        .master-header span { text-align: center; padding: 6px; font-size: 12px; font-weight: bold; border-radius: 8px; }
+
+        .container {
+            max-width: 100%;
+            padding: 8px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #00d4ff, #ff6b6b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Stats Row */
+        .stats-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .stat-card {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 8px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stat-label {
+            font-size: 9px;
+            color: #aaaaaa;
+            margin-bottom: 2px;
+        }
+
+        .stat-value {
+            font-size: 16px;
+            font-weight: bold;
+            color: #00d4ff;
+        }
+
+        /* Section */
+        .section {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border-radius: 14px;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        .section-title {
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #aaaaaa;
+        }
+
+        /* Cards Grid - 5 columns for mobile */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 6px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .card-btn {
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, #4a4e69, #22223b);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .card-btn:active {
+            transform: scale(0.95);
+        }
+
+        .card-btn.owned {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            opacity: 0.9;
+            cursor: default;
+        }
+
+        /* Preview Grid */
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 4px;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 8px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+        }
+
+        .preview-cell {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .preview-free {
+            background: #2ecc71;
+            color: white;
+        }
+
+        /* Buttons */
+        .btn {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary {
+            background: #2ecc71;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        /* Countdown */
+        .countdown {
+            text-align: center;
+            padding: 10px;
+            background: linear-gradient(135deg, rgba(46, 204, 113, 0.2), rgba(46, 204, 113, 0.05));
+            border-radius: 16px;
+            margin-top: 10px;
+        }
+
+        .countdown-number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #2ecc71;
+        }
+
+        /* Game Layout - Side by Side */
+        .game-layout {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .game-board {
+            flex: 1;
+            min-width: 140px;
+        }
+
+        .game-sidebar {
+            flex: 1;
+            min-width: 140px;
+        }
+
+        /* Master Board */
+        .master-board {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            padding: 8px;
+        }
+
+        .master-header {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 3px;
+            margin-bottom: 6px;
+        }
+
+        .master-header span {
+            text-align: center;
+            padding: 4px;
+            font-size: 10px;
+            font-weight: bold;
+            border-radius: 6px;
+        }
+
         .header-b { background: #2ecc71; }
         .header-i { background: #f39c12; }
         .header-n { background: #3498db; }
         .header-g { background: #e74c3c; }
         .header-o { background: #9b59b6; }
-        .master-grid { display: flex; flex-direction: column; gap: 4px; }
-        .master-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
-        .master-cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.5); border-radius: 8px; font-size: 10px; font-weight: bold; transition: all 0.2s; }
-        .master-cell.called { background: #2ecc71; color: #000; animation: pulse 0.3s ease; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
-        
-        .game-sidebar-inner { background: rgba(0,0,0,0.3); border-radius: 16px; padding: 10px; }
-        .current-call { text-align: center; background: linear-gradient(135deg, #667eea, #764ba2); padding: 10px; border-radius: 16px; margin-bottom: 12px; }
-        .call-ball { width: 60px; height: 60px; background: #f39c12; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; margin-top: 6px; animation: ballPop 0.4s ease; }
-        @keyframes ballPop { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-        
-        .history { display: flex; gap: 6px; justify-content: center; margin-bottom: 12px; flex-wrap: wrap; }
-        .history-ball { width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold; }
+
+        .master-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .master-row {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 3px;
+        }
+
+        .master-cell {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 5px;
+            font-size: 8px;
+            font-weight: bold;
+        }
+
+        .master-cell.called {
+            background: #2ecc71;
+            color: #000;
+        }
+
+        /* Game Sidebar */
+        .game-sidebar-inner {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            padding: 8px;
+        }
+
+        .current-call {
+            text-align: center;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 8px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+        }
+
+        .call-ball {
+            width: 50px;
+            height: 50px;
+            background: #f39c12;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 4px;
+        }
+
+        /* History */
+        .history {
+            display: flex;
+            gap: 5px;
+            justify-content: center;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+
+        .history-ball {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8px;
+            font-weight: bold;
+        }
+
         .ball-b { background: #2ecc71; }
         .ball-i { background: #f39c12; }
         .ball-n { background: #3498db; }
         .ball-g { background: #e74c3c; }
         .ball-o { background: #9b59b6; }
-        
-        .player-cards-scroll { max-height: 280px; overflow-y: auto; padding-right: 4px; }
-        .player-card { background: rgba(0,0,0,0.4); border-radius: 12px; padding: 8px; margin-bottom: 8px; }
-        .player-card-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; }
-        .player-cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.12); border-radius: 6px; font-size: 10px; font-weight: bold; }
-        .player-cell.marked { background: #2ecc71; color: #000; }
-        .player-cell.free { background: #f39c12; color: white; }
-        
-        .bingo-btn { width: 100%; padding: 14px; font-size: 18px; font-weight: bold; background: linear-gradient(135deg, #f39c12, #e67e22); border: none; border-radius: 50px; color: white; cursor: pointer; margin-top: 12px; }
-        .bingo-btn:active { transform: scale(0.98); }
-        .bingo-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        
-        .popup { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.9); padding: 10px 20px; border-radius: 50px; font-size: 13px; z-index: 1000; display: none; white-space: nowrap; }
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: none; align-items: center; justify-content: center; z-index: 2000; }
-        .modal-content { background: linear-gradient(135deg, #1a1a2e, #16213e); border-radius: 28px; padding: 25px; text-align: center; margin: 20px; max-width: 280px; border: 1px solid rgba(255,255,255,0.1); }
-        .modal-content h2 { font-size: 36px; margin-bottom: 12px; color: #ffeb3b; }
-        .hidden { display: none !important; }
-        ::-webkit-scrollbar { width: 3px; }
-        ::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 3px; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
-        
-        .insufficient { animation: shake 0.5s ease; }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+
+        /* Player Cards */
+        .player-cards-scroll {
+            max-height: 180px;
+            overflow-y: auto;
+        }
+
+        .player-card {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 10px;
+            padding: 6px;
+            margin-bottom: 6px;
+        }
+
+        .player-card-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 2px;
+        }
+
+        .player-cell {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.12);
+            border-radius: 5px;
+            font-size: 9px;
+            font-weight: bold;
+        }
+
+        .player-cell.marked {
+            background: #2ecc71;
+            color: #000;
+        }
+
+        .player-cell.free {
+            background: #f39c12;
+            color: white;
+        }
+
+        /* Bingo Button */
+        .bingo-btn {
+            width: 100%;
+            padding: 10px;
+            font-size: 14px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            border: none;
+            border-radius: 40px;
+            color: white;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+
+        /* Popup */
+        .popup {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 8px 16px;
+            border-radius: 40px;
+            font-size: 12px;
+            z-index: 1000;
+            display: none;
+            white-space: nowrap;
+        }
+
+        /* Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border-radius: 24px;
+            padding: 20px;
+            text-align: center;
+            margin: 20px;
+            max-width: 260px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-content h2 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            color: #ffeb3b;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        ::-webkit-scrollbar {
+            width: 3px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header"><div class="logo">🎯 LOGO BING</div></div>
-        <div class="stats-row">
-            <div class="stat-card"><div class="stat-label">💰 BALANCE</div><div class="stat-value" id="balance">0 ETB</div></div>
-            <div class="stat-card"><div class="stat-label">🎮 CARDS</div><div class="stat-value" id="cardCount">0</div></div>
+        <div class="header">
+            <div class="logo">🎯 LOGO BING</div>
         </div>
 
-        <!-- Lobby View -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-label">💰 BALANCE</div>
+                <div class="stat-value" id="balance">0 ETB</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">🎮 CARDS</div>
+                <div class="stat-value" id="cardCount">0</div>
+            </div>
+        </div>
+
         <div id="lobbyView">
             <div class="section">
-                <div class="section-title">🎴 TAP A CARD TO BUY (MAX 2, 10 ETB EACH)</div>
+                <div class="section-title">🎴 TAP A CARD TO BUY (MAX 2, 10 ETB)</div>
                 <div class="cards-grid" id="cardsGrid"></div>
             </div>
             
@@ -119,7 +454,7 @@
                 <div class="section-title">🎮 MY CARDS (<span id="myCardsCount">0</span>/2)</div>
                 <div id="myCardsList"></div>
                 <div class="action-buttons">
-                    <button class="btn btn-secondary" id="resetBtn">🔄 RESET ALL CARDS</button>
+                    <button class="btn btn-secondary" id="resetBtn">🔄 RESET</button>
                 </div>
             </div>
 
@@ -129,7 +464,6 @@
             </div>
         </div>
 
-        <!-- Game View - Side by Side -->
         <div id="gameView" class="hidden">
             <div class="game-layout">
                 <div class="game-board">
@@ -143,7 +477,7 @@
                 <div class="game-sidebar">
                     <div class="game-sidebar-inner">
                         <div class="current-call">
-                            <div style="font-size: 11px;">CURRENT CALL</div>
+                            <div style="font-size: 10px;">CURRENT CALL</div>
                             <div class="call-ball" id="currentCall">—</div>
                         </div>
                         <div class="history" id="historyCalls"></div>
@@ -156,6 +490,7 @@
     </div>
 
     <div class="popup" id="popup"></div>
+
     <div class="modal" id="winnerModal">
         <div class="modal-content">
             <h2>🎉 BINGO!</h2>
@@ -165,10 +500,21 @@
     </div>
 
     <script>
+        // ============================================
+        // TELEGRAM WEBAPP INTEGRATION
+        // ============================================
         const tg = window.Telegram?.WebApp;
-        if (tg) { tg.ready(); tg.expand(); }
+        if (tg) {
+            tg.ready();
+            tg.expand();
+            tg.enableClosingConfirmation();
+        }
+
+        // ============================================
+        // BACKEND CONFIGURATION
+        // ============================================
+        const BACKEND_URL = 'https://logo-bingo-complete-gfdjsdo.onrender.com';
         
-        const BACKEND_URL = window.location.origin;
         let telegramId = tg?.initDataUnsafe?.user?.id || 'test_' + Math.random();
         let balance = 0;
         let firstName = '';
@@ -180,37 +526,70 @@
         let countdownInterval = null;
         let countdown = 30;
         let isProcessingBuy = false;
+
+        // ============================================
+        // API CALLS
+        // ============================================
         
         async function loadUserData() {
             try {
-                const res = await fetch(`${BACKEND_URL}/api/user/${telegramId}`);
-                const data = await res.json();
+                const response = await fetch(`${BACKEND_URL}/api/user/${telegramId}`);
+                const data = await response.json();
                 if (data.success) {
                     balance = data.balance;
                     firstName = data.firstName;
                     updateBalanceDisplay();
                 }
-            } catch(e) { console.error(e); }
+            } catch(error) {
+                // First time user - give 10 ETB starting balance
+                balance = 10;
+                firstName = 'Player';
+                updateBalanceDisplay();
+                // Register new user with 10 ETB
+                await fetch(`${BACKEND_URL}/api/game`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        telegramId: telegramId,
+                        action: 'updateBalance',
+                        data: { balance: 10, betAmount: 0 }
+                    })
+                });
+            }
         }
         
         async function updateBalanceOnServer(newBalance, betAmount = 0) {
             try {
                 await fetch(`${BACKEND_URL}/api/game`, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ telegramId, action: 'updateBalance', data: { balance: newBalance, betAmount } })
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        telegramId: telegramId,
+                        action: 'updateBalance',
+                        data: { balance: newBalance, betAmount: betAmount }
+                    })
                 });
-            } catch(e) {}
+            } catch(error) {
+                console.error('Failed to update balance:', error);
+            }
         }
         
         async function recordWin(winAmount, newBalance) {
             try {
                 await fetch(`${BACKEND_URL}/api/game`, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ telegramId, action: 'recordWin', data: { winAmount: winAmount, newBalance: newBalance } })
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        telegramId: telegramId,
+                        action: 'recordWin',
+                        data: { winAmount: winAmount, newBalance: newBalance }
+                    })
                 });
-            } catch(e) {}
+            } catch(error) {
+                console.error('Failed to record win:', error);
+            }
         }
-        
+
         function updateBalanceDisplay() {
             document.getElementById('balance').textContent = `${balance.toFixed(2)} ETB`;
             document.getElementById('cardCount').textContent = myCards.length;
@@ -232,6 +611,10 @@
             updateBalanceDisplay();
             updateBalanceOnServer(balance);
         }
+
+        // ============================================
+        // CARD GENERATION
+        // ============================================
         
         function generateAllCards() {
             for (let i = 1; i <= 500; i++) {
@@ -240,23 +623,27 @@
         }
         
         function generateGrid() {
-            const grid = [[],[],[],[],[]];
+            const grid = [[], [], [], [], []];
             for (let col = 0; col < 5; col++) {
                 const start = col * 15 + 1;
                 const end = start + 14;
-                let nums = [];
-                for (let n = start; n <= end; n++) nums.push(n);
-                for (let i = nums.length - 1; i > 0; i--) {
+                let numbers = [];
+                for (let n = start; n <= end; n++) numbers.push(n);
+                for (let i = numbers.length - 1; i > 0; i--) {
                     const j = Math.floor(Math.random() * (i + 1));
-                    [nums[i], nums[j]] = [nums[j], nums[i]];
+                    [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
                 }
                 for (let row = 0; row < 5; row++) {
                     if (row === 2 && col === 2) grid[row][col] = 0;
-                    else grid[row][col] = nums[row];
+                    else grid[row][col] = numbers[row];
                 }
             }
             return grid;
         }
+
+        // ============================================
+        // CARD SELECTION UI
+        // ============================================
         
         function buildCardsGrid() {
             const container = document.getElementById('cardsGrid');
@@ -265,9 +652,7 @@
                 const btn = document.createElement('button');
                 btn.className = 'card-btn';
                 btn.textContent = i;
-                if (myCards.some(c => c.id === i)) {
-                    btn.classList.add('owned');
-                }
+                if (myCards.some(c => c.id === i)) btn.classList.add('owned');
                 btn.onclick = () => autoBuyCard(i);
                 container.appendChild(btn);
             }
@@ -285,8 +670,6 @@
             }
             if (!deductBalance(10)) {
                 showPopup('❌ Insufficient balance! Use /deposit');
-                document.getElementById('balance').classList.add('insufficient');
-                setTimeout(() => document.getElementById('balance').classList.remove('insufficient'), 500);
                 return;
             }
             
@@ -294,8 +677,6 @@
             const card = allCards.find(c => c.id === cardId);
             myCards.push(card);
             
-            // Update button to show owned
-            const btn = document.querySelector(`.card-btn:not(.owned)`);
             const allBtns = document.querySelectorAll('.card-btn');
             for (let b of allBtns) {
                 if (parseInt(b.textContent) === cardId) {
@@ -308,7 +689,6 @@
             displayMyCards();
             document.getElementById('myCardsSection').classList.remove('hidden');
             showPopup(`✅ Card ${card.id} purchased! Balance: ${balance.toFixed(2)} ETB`);
-            if (tg) tg.HapticFeedback?.notificationOccurred('success');
             
             if (myCards.length === 1) startCountdown();
             isProcessingBuy = false;
@@ -328,31 +708,39 @@
                     }
                 }
                 gridHtml += '</div>';
-                div.innerHTML = `<div style="margin-bottom:4px; font-size:9px; color:#aaa;">Board #${card.id}</div>${gridHtml}`;
+                div.innerHTML = `<div style="margin-bottom:3px; font-size:8px;">Board #${card.id}</div>${gridHtml}`;
                 container.appendChild(div);
             });
         }
+
+        // ============================================
+        // GAME COUNTDOWN
+        // ============================================
         
         function startCountdown() {
             if (myCards.length === 0) return;
             countdown = 30;
-            const countdownDiv = document.getElementById('countdownSection');
-            const countdownEl = document.getElementById('countdownTimer');
-            countdownDiv.classList.remove('hidden');
+            const cdDiv = document.getElementById('countdownSection');
+            const cdEl = document.getElementById('countdownTimer');
+            cdDiv.classList.remove('hidden');
             if (countdownInterval) clearInterval(countdownInterval);
             countdownInterval = setInterval(() => {
                 countdown--;
-                countdownEl.textContent = countdown;
+                cdEl.textContent = countdown;
                 if (countdown <= 0) {
                     clearInterval(countdownInterval);
-                    countdownDiv.classList.add('hidden');
+                    cdDiv.classList.add('hidden');
                     startGame();
                 }
             }, 1000);
         }
+
+        // ============================================
+        // GAME START & NUMBER CALLING
+        // ============================================
         
         function startGame() {
-            if (myCards.length === 0) { showPopup('⚠️ Buy at least one card!'); return; }
+            if (myCards.length === 0) return;
             gameActive = true;
             calledNumbers = [];
             document.getElementById('lobbyView').classList.add('hidden');
@@ -360,7 +748,7 @@
             buildMasterGrid();
             displayPlayingCards();
             startCalling();
-            showPopup('🎮 Game Started! Click BINGO when you have a winning pattern!');
+            showPopup('🎮 Game Started! Click BINGO to win!');
         }
         
         function buildMasterGrid() {
@@ -396,7 +784,7 @@
                     }
                 }
                 gridHtml += '</div>';
-                div.innerHTML = `<div style="margin-bottom:4px; font-size:9px;">Board #${card.id}</div>${gridHtml}`;
+                div.innerHTML = `<div style="margin-bottom:3px; font-size:8px;">#${card.id}</div>${gridHtml}`;
                 container.appendChild(div);
             });
         }
@@ -407,7 +795,7 @@
             if (callInterval) clearInterval(callInterval);
             callInterval = setInterval(() => {
                 if (!gameActive) return;
-                if (available.length === 0) { endGame('GAME OVER!'); return; }
+                if (available.length === 0) { endGame(); return; }
                 const idx = Math.floor(Math.random() * available.length);
                 const num = available.splice(idx, 1)[0];
                 callNumber(num);
@@ -423,10 +811,7 @@
             else if (num < 61) letter = 'G';
             else letter = 'O';
             
-            const callEl = document.getElementById('currentCall');
-            callEl.textContent = `${letter}-${num}`;
-            callEl.style.animation = 'none';
-            setTimeout(() => callEl.style.animation = 'ballPop 0.4s ease', 10);
+            document.getElementById('currentCall').textContent = `${letter}-${num}`;
             
             const history = document.getElementById('historyCalls');
             const lastThree = calledNumbers.slice(-3);
@@ -458,6 +843,10 @@
                 }
             });
         }
+
+        // ============================================
+        // WINNING PATTERN DETECTION
+        // ============================================
         
         function hasWinningPattern(card) {
             const grid = card.grid;
@@ -488,16 +877,14 @@
         
         function claimBingo() {
             if (!gameActive) { showPopup('Game not active!'); return; }
-            if (calledNumbers.length < 4) { showPopup('⚠️ Wait for at least 4 numbers to be called!'); return; }
-            
+            if (calledNumbers.length < 4) { showPopup('⚠️ Wait for 4 numbers!'); return; }
             for (const card of myCards) {
                 if (hasWinningPattern(card)) {
                     declareWinner(card);
                     return;
                 }
             }
-            showPopup('❌ No winning pattern found! Keep playing.');
-            if (tg) tg.HapticFeedback?.notificationOccurred('error');
+            showPopup('❌ No winning pattern! Keep playing.');
         }
         
         function declareWinner(card) {
@@ -506,12 +893,9 @@
             const winAmount = 500;
             addBalance(winAmount);
             recordWin(winAmount, balance);
-            
-            document.getElementById('winnerMessage').innerHTML = `🎉 YOU WON! 🎉<br>Board #${card.id}<br>Prize: ${winAmount} ETB<br><br>New Balance: ${balance.toFixed(2)} ETB`;
+            document.getElementById('winnerMessage').innerHTML = `🎉 YOU WON! 🎉<br>Prize: ${winAmount} ETB<br>New Balance: ${balance.toFixed(2)} ETB`;
             document.getElementById('winnerModal').style.display = 'flex';
-            if (typeof confetti === 'function') confetti({ particleCount: 150, spread: 70 });
-            if (tg) tg.HapticFeedback?.notificationOccurred('success');
-            showPopup(`🎉 BINGO! You won ${winAmount} ETB!`);
+            if (typeof confetti === 'function') confetti({ particleCount: 100, spread: 60 });
         }
         
         function resetGame() {
@@ -525,21 +909,14 @@
             if (myCards.length > 0) {
                 displayMyCards();
                 document.getElementById('myCardsSection').classList.remove('hidden');
-            } else {
-                document.getElementById('myCardsSection').classList.add('hidden');
             }
             buildCardsGrid();
-            showPopup('Game reset! Tap cards to buy and play again.');
         }
         
         function resetAllCards() {
-            if (myCards.length === 0) {
-                showPopup('No cards to reset!');
-                return;
-            }
-            // Refund card costs (10 ETB per card)
-            const refundAmount = myCards.length * 10;
-            balance += refundAmount;
+            if (myCards.length === 0) return;
+            const refund = myCards.length * 10;
+            balance += refund;
             myCards = [];
             updateBalanceDisplay();
             updateBalanceOnServer(balance);
@@ -550,17 +927,16 @@
             if (countdownInterval) clearInterval(countdownInterval);
             if (callInterval) clearInterval(callInterval);
             gameActive = false;
-            showPopup(`🔄 All cards reset! Refunded ${refundAmount} ETB. Tap new cards to play.`);
+            showPopup(`🔄 Reset! Refunded ${refund} ETB.`);
         }
         
         function showPopup(msg) {
             const popup = document.getElementById('popup');
             popup.textContent = msg;
             popup.style.display = 'block';
-            setTimeout(() => popup.style.display = 'none', 2500);
+            setTimeout(() => popup.style.display = 'none', 2000);
         }
         
-        // Event listeners
         document.getElementById('resetBtn').onclick = resetAllCards;
         document.getElementById('bingoBtn').onclick = claimBingo;
         document.getElementById('closeModalBtn').onclick = () => {
@@ -568,7 +944,6 @@
             resetGame();
         };
         
-        // Initialize
         generateAllCards();
         buildCardsGrid();
         loadUserData().then(() => {
@@ -576,15 +951,13 @@
             if (myCards.length > 0) {
                 displayMyCards();
                 document.getElementById('myCardsSection').classList.remove('hidden');
-                // Don't auto-start countdown - wait for user to buy cards
             }
-            showPopup(`🎯 Welcome ${firstName || 'Player'}! Tap any card to buy (10 ETB each, max 2 cards)`);
+            showPopup(`🎯 Welcome! Tap any card to buy (10 ETB each, max 2)`);
         });
         
         if (tg) {
             tg.MainButton.setText("BUY CARDS");
             tg.MainButton.show();
-            tg.MainButton.onClick(() => { if (!gameActive) showPopup('Tap a card number to buy!'); });
         }
     </script>
 </body>
