@@ -2,18 +2,23 @@ const { Telegraf, Markup } = require('telegraf');
 const express = require('express');
 const cors = require('cors');
 
+// ==================== CONFIGURATION ====================
 const BOT_TOKEN = '8762888807:AAHFSr4vrIME6cB8hY9JY8um8a2QR2zYORs';
 const WEBAPP_URL = 'https://eloquent-dasik-4d9770.netlify.app';
 const PORT = process.env.PORT || 10000;
 
+// ==================== DATABASE ====================
 const users = new Map();
 const pendingDeposits = new Map();
 const pendingWithdrawals = new Map();
 
+// ==================== INITIALIZATION ====================
 const bot = new Telegraf(BOT_TOKEN);
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// ==================== HELPER FUNCTIONS ====================
 
 function getUser(telegramId) {
     if (!users.has(telegramId)) {
@@ -48,6 +53,8 @@ function isAdmin(telegramId) {
     const adminIds = ['1765057062', '1044688332', '6499874707'];
     return adminIds.includes(telegramId);
 }
+
+// ==================== BOT COMMANDS ====================
 
 bot.start(async (ctx) => {
     const user = getUser(ctx.from.id);
@@ -254,6 +261,8 @@ bot.command('help', async (ctx) => {
     await ctx.reply(message, { parse_mode: 'HTML' });
 });
 
+// ==================== ADMIN COMMANDS ====================
+
 bot.command('approve_deposit', async (ctx) => {
     if (!isAdmin(ctx.from.id)) return;
     const args = ctx.message.text.split(' ');
@@ -283,6 +292,8 @@ bot.command('approve_withdraw', async (ctx) => {
     await ctx.reply(`✅ Withdrawal approved! -${withdrawal.amount} ETB`);
     await bot.telegram.sendMessage(withdrawal.userId, `✅ Withdrawal approved!\nNew balance: ${formatBalance(user.balance)}`);
 });
+
+// ==================== API ENDPOINTS ====================
 
 app.get('/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -317,13 +328,15 @@ app.post('/webhook', async (req, res) => {
     }
 });
 
+// ==================== START SERVER ====================
 app.listen(PORT, () => {
-    console.log(`✅ Bot running on port ${PORT}`);
+    console.log(`✅ Logo Bing Bot running on port ${PORT}`);
     console.log(`🎮 WebApp URL: ${WEBAPP_URL}`);
+    console.log(`📱 Admin IDs: 1765057062, 1044688332, 6499874707`);
 });
 
 bot.launch();
-console.log('🤖 Bot launched');
+console.log('🤖 Bot launched successfully');
 
 process.once('SIGINT', () => bot.stop('SIGINT'));
 process.once('SIGTERM', () => bot.stop('SIGTERM'));

@@ -1,6 +1,7 @@
 {
   "name": "logo-bing-bot",
   "version": "1.0.0",
+  "description": "Logo Bing Bingo - Commercial Telegram Bot",
   "main": "bot.js",
   "scripts": {
     "start": "node bot.js"
